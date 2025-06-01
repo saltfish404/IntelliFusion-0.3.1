@@ -38,7 +38,7 @@ intelliFusion 采用以下技术栈构建：
 - [ChatGLM](https://github.com/THUDM/ChatGLM-6B) ([ChatGLM2](https://github.com/THUDM/ChatGLM2-6B))
 
 **通过JSON插件调用的语言模型**
-- [Ollama]
+- [Ollama](https://ollama.com/)([Deepseek-r1](https://ollama.com/library/deepseek-r1))
 
 ## 更新信息
 
