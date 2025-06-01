@@ -6,9 +6,24 @@
 [![star](https://gitee.com/argonserver/IntelliFusion/badge/star.svg?theme=gray)](https://gitee.com/argonserver/IntelliFusion/stargazers)
 
 ## 介绍
-intelliFusion是一个开源的、高自由度、支持多种模型库的AI模型库的使用平台。为方便不通用库的使用，我们拥有用户可自行导入不同的模型库。
-intelliFusion 运用flask形成webui处理前端。使用Ajax，异步获取数据，使用echarts进行了数据可视化，使用户可以根据自己电脑的硬件使用率，实时检测电脑使用状况，自行规划使用率。
-IntelliFusion的Preview版本为单文件，因此部分功能会因为无法导入文件而无法使用附加功能，如自行添加提示词，自行更改代码高亮文件等功能，所以推荐安装IntelliFusion Release版本。
+intelliFusion是一个开源的、高自由度、支持多种模型库的AI模型库的使用平台。为方便不同库的使用，我们支持用户自行导入不同的模型库。
+
+intelliFusion 采用以下技术栈构建：
+- 后端使用Flask框架提供Web服务
+- 使用FlaskWebGUI实现桌面应用封装
+- 使用Ajax实现异步数据获取
+- 集成系统监控功能：
+  - CPU使用率监控
+  - GPU使用率监控（通过pynvml）
+  - 内存使用监控（通过psutil）
+- 支持多种AI模型：
+  - OpenAI API（支持GPT系列模型）
+  - ChatGLM系列模型
+  - 其他支持JSON,OpenAI,WebUI,API调用的语言模型
+- 提供基础的系统资源监控功能
+- 支持多语言提示词配置
+
+
 
 ## 支持模型
 
