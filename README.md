@@ -111,7 +111,6 @@ IntelliFusion的Preview版本为单文件，因此部分功能会因为无法导
    python src/client.py
    ```
 
-4. 浏览器访问 http://localhost:5000
 
 ## 依赖
 详见 requirements.txt
