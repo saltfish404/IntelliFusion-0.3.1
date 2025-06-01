@@ -153,8 +153,6 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENS
 # ⚠️ 二次开发说明
 
 本项目基于 [hcl595/IntelliFusion](https://github.com/hcl595/IntelliFusion) 按照 Apache 2.0 协议进行修改和扩展。
-原作者：hcl595
-当前仓库仅为 @saltfish404 的个人二次开发/学习用途。
 
 
 ## 致谢
