@@ -1,0 +1,7 @@
+本项目基于 hcl595/IntelliFusion (https://github.com/hcl595/IntelliFusion) 按照 Apache 2.0 协议进行修改和分发。
+原作者版权归 hcl595 所有，当前仓库仅为 saltfish404 的二次开发版本。
+
+主要依赖与致谢：
+- QWeather API
+- ip-api.com
+- 以及所有开源社区贡献者 

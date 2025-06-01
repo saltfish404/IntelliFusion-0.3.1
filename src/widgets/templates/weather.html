@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>天气组件</title>
+  <style>
+    html, body {
+      width: 100vw;
+      height: 100vh;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+    body { background:transparent; }
+    #weather-scale-root {
+      width: 100vw;
+      height: 100vh;
+      min-width: 120px;
+      min-height: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      background: transparent;
+    }
+    #weather-scale-content {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .weather-card {
+      width: 100%;
+      height: 100%;
+      max-width: 420px;
+      max-height: 600px;
+      min-width: 120px;
+      min-height: 120px;
+      border-radius: 18px;
+      background: #eaf6fd;
+      box-shadow: 0 2px 8px #0002;
+      padding: 2.5vw 3vw 1vw 3vw;
+      font-family: "微软雅黑", Arial, sans-serif;
+      margin: 0;
+      box-sizing: border-box;
+      transition: max-width 0.3s, line-height 0.3s, font-size 0.3s;
+      line-height: 1.6;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      align-items: stretch;
+      overflow: hidden;
+    }
+    .weather-title { font-size: 1.2em; font-weight: bold; margin-bottom: 8px; line-height: 1.2; }
+    .weather-temp { font-size: 2.2em; font-weight: bold; margin: 12px 0 8px 0; line-height: 1.1; }
+    .weather-desc { font-size: 1em; color: #666; margin-bottom: 6px; line-height: 1.4; }
+    .weather-details { font-size: 0.95em; color: #666; margin-bottom: 6px; line-height: 1.4; }
+    .weather-extra { font-size: 0.95em; color: #666; margin-bottom: 6px; line-height: 1.4; }
+    .weather-forecast { font-size: 0.95em; color: #888; margin-top: 10px; line-height: 1.4; }
+    .loading { text-align: center; padding: 20px; color: #666; }
+    .air-quality, .uv-index { font-size: 14px; color: #666; margin-bottom: 2px; }
+    .visual-row { display: flex; align-items: center; margin-bottom: 14px; }
+    .visual-label { width: 70px; font-size: 14px; font-weight: bold; }
+    .visual-value { width: 48px; font-size: 18px; font-weight: bold; text-align: right; }
+    .visual-unit { font-size: 13px; color: #888; margin-left: 4px; margin-right: 0; }
+    .visual-desc { font-size: 13px; color: #888; margin-left: auto; }
+    .visual-bar-bg { width: 70px; height: 8px; background: #eee; border-radius: 4px; margin-left: 10px; margin-right: 10px; position: relative; }
+    .visual-bar { height: 8px; border-radius: 4px; background: #4fc3f7; position: absolute; left: 0; top: 0; }
+    .uv-circles { display: flex; align-items: center; margin-left: 8px; }
+    .uv-dot { width: 10px; height: 10px; border-radius: 50%; margin-right: 2px; background: #eee; }
+    .uv-dot.active { background: #ffb300; }
+    .weather-card-box {
+      background: #fff;
+      border-radius: 16px;
+      padding: 12px 18px 10px 18px;
+      margin-bottom: 14px;
+      width: 98%;
+      box-sizing: border-box;
+      position: relative;
+      min-width: 120px;
+      box-shadow: 0 2px 8px #0001;
+    }
+    .weather-card-box .card-title {
+      font-weight: bold;
+      font-size: 17px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .weather-card-box .card-arrow {
+      width: 18px;
+      height: 18px;
+      display: inline-block;
+      vertical-align: middle;
+      margin-left: 4px;
+    }
+    .weather-card-box .card-bottom {
+      font-size: 15px;
+      color: #888;
+      margin-top: 8px;
+      font-weight: bold;
+    }
+    .wind-numbers, .humidity-numbers {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      margin-left: 16px;
+      flex: 1;
+    }
+    .wind-numbers .main, .humidity-numbers .main {
+      font-size: 18px;
+      font-weight: bold;
+      color: #222;
+      line-height: 1.2;
+    }
+    .wind-numbers .sub, .humidity-numbers .sub {
+      font-size: 13px;
+      color: #888;
+      margin-bottom: 4px;
+      line-height: 1.2;
+    }
+    .wind-level { font-size: 16px; font-weight: bold; margin-top: 10px; color: #222; }
+    .wind-level-desc { font-size: 14px; color: #888; margin-left: 6px; }
+    @media (max-width: 400px), (max-height: 400px) {
+      .weather-card {
+        max-width: 100vw;
+        max-height: 100vh;
+        padding: 2vw 1vw 1vw 1vw;
+        border-radius: 12px;
+      }
+      .weather-title, .weather-desc, .weather-details, .weather-extra, .weather-forecast {
+        font-size: 0.95em;
+      }
+      .weather-temp { font-size: 1.3em; }
+      .weather-card-box { padding: 8px 8px 6px 8px; border-radius: 10px; }
+      .visual-label, .visual-value { width: 36px; font-size: 12px; }
+      .visual-bar-bg { width: 36px; }
+      .uv-dot, .uv-dot.active { width: 7px; height: 7px; }
+    }
+    @media (max-width: 260px), (max-height: 220px) {
+      .weather-card {
+        padding: 0.5vw 0.5vw 0.5vw 0.5vw;
+        border-radius: 8px;
+      }
+      .weather-title, .weather-desc, .weather-details, .weather-extra, .weather-forecast {
+        font-size: 0.8em;
+      }
+      .weather-temp { font-size: 1em; }
+    }
+    /* 隐藏滚动条 */
+    ::-webkit-scrollbar { display: none; }
+    body, #weather-scale-root, #weather-scale-content, .weather-card { scrollbar-width: none; -ms-overflow-style: none; }
+  </style>
+</head>
+<body>
+  <div id="weather-scale-root">
+    <div id="weather-scale-content">
+      <div class="weather-card" id="weather-card-main">
+        <div id="weather-alert" style="min-height:32px;margin-bottom:2px;"></div>
+        <div class="weather-basic" id="weather-basic"></div>
+        <div class="weather-details-advanced" id="weather-advanced"></div>
+        <div id="city-search" style="display:none;margin-top:10px;padding:10px;background:#fff;border-radius:8px;box-shadow:0 2px 8px #0001;">
+          <div style="display:flex;align-items:center;margin-bottom:8px;">
+            <input type="text" id="city-input" placeholder="输入城市名称" style="flex:1;padding:8px;border:1px solid #ddd;border-radius:4px;margin-right:8px;">
+            <button onclick="searchCity()" style="padding:8px 16px;background:#4caf50;color:#fff;border:none;border-radius:4px;cursor:pointer;">搜索</button>
+          </div>
+          <div id="city-results" style="max-height:200px;overflow-y:auto;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    function getAirQualityText(aqi) {
+      if (!aqi) return '';
+      const val = parseInt(aqi);
+      if (val <= 50) return '优';
+      if (val <= 100) return '良';
+      if (val <= 150) return '轻度污染';
+      if (val <= 200) return '中度污染';
+      if (val <= 300) return '重度污染';
+      return '严重污染';
+    }
+    function getAirColor(aqi) {
+      const val = parseInt(aqi);
+      if (val <= 50) return '#4caf50';
+      if (val <= 100) return '#cddc39';
+      if (val <= 150) return '#ffeb3b';
+      if (val <= 200) return '#ff9800';
+      if (val <= 300) return '#f44336';
+      return '#880e4f';
+    }
+    function getUvLevelColor(level) {
+      if (level <= 2) return '#4caf50';
+      if (level <= 5) return '#ffeb3b';
+      if (level <= 7) return '#ff9800';
+      if (level <= 10) return '#f44336';
+      return '#8e24aa';
+    }
+    function isCompactMode() {
+      const root = document.getElementById('weather-scale-root');
+      if (!root) return false;
+      return root.clientWidth < 220 || root.clientHeight < 180;
+    }
+    function updateWeatherDisplay() {
+      const advanced = document.getElementById('weather-advanced');
+      const card = document.getElementById('weather-card-main');
+      if (!advanced || !card) return;
+      if (isCompactMode()) {
+        advanced.style.display = 'none';
+        card.classList.add('compact');
+      } else {
+        advanced.style.display = '';
+        card.classList.remove('compact');
+      }
+    }
+    function updateWeather() {
+      fetch('/widgets/weather/now')
+        .then(response => response.json())
+        .then(data => {
+          if (data.error) {
+            document.getElementById('weather-basic').innerHTML = `<div class="weather-desc">获取天气数据失败</div>`;
+            document.getElementById('weather-advanced').innerHTML = '';
+            return;
+          }
+          if (isCompactMode()) {
+            document.getElementById('weather-basic').innerHTML = `
+              <div class="weather-title">${data.location || '广东省珠海市'}</div>
+              <div class="weather-temp">${data.temp !== undefined ? data.temp + '°C' : '--'}</div>
+              <div class="weather-desc">${data.text || '--'}</div>
+            `;
+            document.getElementById('weather-advanced').innerHTML = '';
+          } else {
+            document.getElementById('weather-basic').innerHTML = `
+              <div class="weather-title">${data.location || '广东省珠海市'}</div>
+              <div class="weather-temp">${data.temp !== undefined ? data.temp + '°C' : '--'}</div>
+              <div class="weather-desc">${data.text || '--'}，湿度${data.humidity !== undefined ? data.humidity + '%' : '--'}</div>
+              <div class="weather-details">${data.windDir || '--'} ${data.windScale !== undefined ? data.windScale + '级' : ''}</div>
+              <div class="weather-extra">
+                能见度：${data.vis ? data.vis + '公里' : '—'}<br>
+                气压：${data.pressure ? data.pressure + 'hPa' : '—'}<br>
+                ${data.air ? `空气质量：${data.air.category || ''}（${data.air.aqi || ''}）<br>` : ''}
+                ${data.uv ? `UV：${data.uv.level || ''} ${data.uv.name || ''}<br>` : ''}
+              </div>
+              <div class="weather-forecast" id="weather-forecast"></div>
+            `;
+            let visuals = '';
+            if (data.vis) {
+              let visVal = parseFloat(data.vis);
+              let visDesc = visVal >= 10 ? '极好' : visVal >= 5 ? '良好' : '较差';
+              // SVG阶梯图生成（右对齐，宽度80px，保证全部显示）
+              let steps = '';
+              let totalSteps = 6;
+              let barHeight = 8;
+              let gap = 2;
+              let svgWidth = 80;
+              let svgHeight = 60;
+              let activeSteps = Math.max(1, Math.min(totalSteps, Math.round(visVal / 5)));
+              for(let i=0;i<totalSteps;i++){
+                let y = svgHeight - (i+1)*barHeight - i*gap - 2; // 2px底部留白
+                let width = 20 + (totalSteps-1-i)*12;
+                let x = svgWidth-width; // 右对齐
+                steps += `<rect x='${x}' y='${y}' width='${width}' height='${barHeight}' rx='3' fill='${i<activeSteps?"#388e3c":"#e0e0e0"}'/>`;
+              }
+              visuals += `
+              <div class='visual-card' style='display:flex;align-items:center;justify-content:space-between;background:#fff;border-radius:16px;box-shadow:0 2px 8px #0001;padding:12px 18px 18px 18px;margin-bottom:14px;'>
+                <div style='display:flex;flex-direction:column;align-items:flex-start;'>
+                  <div style='font-size:14px;font-weight:bold;color:#222;'>能见度</div>
+                  <div style='display:flex;align-items:baseline;margin-top:2px;'>
+                    <span style='font-size:22px;font-weight:bold;color:#222;'>${visVal}</span>
+                    <span style='font-size:13px;color:#888;margin-left:4px;'>公里</span>
+                  </div>
+                  <div style='font-size:13px;color:#388e3c;margin-top:2px;'>${visDesc}</div>
+                </div>
+                <svg width='80' height='60' style='display:block;'>${steps}</svg>
+              </div>`;
+            }
+            if (data.pressure) {
+              let pVal = parseInt(data.pressure);
+              let pDesc = pVal > 1015 ? '上升' : pVal < 1000 ? '下降' : '平稳';
+              // 半环仪表盘参数
+              let minP = 980, maxP = 1040;
+              let percent = Math.max(0, Math.min(1, (pVal-minP)/(maxP-minP)));
+              let startAngle = 135;
+              let r = 28, cx = 35, cy = 35;
+              let pointerAngle = startAngle + percent * 270;
+              let pointerX = cx + r * Math.cos(pointerAngle*Math.PI/180);
+              let pointerY = cy + r * Math.sin(pointerAngle*Math.PI/180);
+              // 主色段终点
+              let arcLen = percent * 270;
+              let arcEndAngle = startAngle + arcLen;
+              let arcEndX = cx + r * Math.cos(arcEndAngle*Math.PI/180);
+              let arcEndY = cy + r * Math.sin(arcEndAngle*Math.PI/180);
+              let largeArc = arcLen>180?1:0;
+              visuals += `
+              <div class='visual-card' style='display:flex;align-items:center;justify-content:space-between;background:#fff;border-radius:16px;box-shadow:0 2px 8px #0001;padding:12px 18px 10px 18px;margin-bottom:14px;'>
+                <div style='display:flex;flex-direction:column;align-items:flex-start;'>
+                  <div style='font-size:14px;font-weight:bold;color:#222;'>气压</div>
+                  <div style='display:flex;align-items:baseline;margin-top:2px;'>
+                    <span style='font-size:22px;font-weight:bold;color:#222;'>${pVal}</span>
+                    <span style='font-size:13px;color:#888;margin-left:4px;'>hPa</span>
+                  </div>
+                  <div style='font-size:13px;color:#7c4dff;margin-top:2px;'>${pDesc}</div>
+                </div>
+                <svg width='70' height='70' style='display:block;'>
+                  <path d='M${cx + r * Math.cos(startAngle*Math.PI/180)},${cy + r * Math.sin(startAngle*Math.PI/180)} A${r},${r} 0 1,1 ${cx + r * Math.cos((startAngle+270)*Math.PI/180)},${cy + r * Math.sin((startAngle+270)*Math.PI/180)}' fill='none' stroke='#eee' stroke-width='7'/>
+                  <path d='M${cx + r * Math.cos(startAngle*Math.PI/180)},${cy + r * Math.sin(startAngle*Math.PI/180)} A${r},${r} 0 ${largeArc},1 ${arcEndX},${arcEndY}' fill='none' stroke='#9575cd' stroke-width='7'/>
+                  <line x1='35' y1='35' x2='${pointerX}' y2='${pointerY}' stroke='#7c4dff' stroke-width='4' stroke-linecap='round'/>
+                  <circle cx='35' cy='35' r='4' fill='#9575cd'/>
+                </svg>
+              </div>`;
+            }
+            if (data.air && data.air.aqi) {
+              let aqi = parseInt(data.air.aqi);
+              let aqiText = getAirQualityText(aqi);
+              let color = getAirColor(aqi);
+              // 270°半环色带
+              let percent = Math.min(1, aqi/200);
+              let startAngle = 135;
+              let r = 30, cx = 35, cy = 35;
+              let arcLen = percent * 270;
+              let arcEndAngle = startAngle + arcLen;
+              let arcEndX = cx + r * Math.cos(arcEndAngle*Math.PI/180);
+              let arcEndY = cy + r * Math.sin(arcEndAngle*Math.PI/180);
+              let largeArc = arcLen>180?1:0;
+              visuals += `
+              <div class='visual-card' style='display:flex;align-items:center;justify-content:space-between;background:#fff;border-radius:16px;box-shadow:0 2px 8px #0001;padding:12px 18px 10px 18px;margin-bottom:14px;'>
+                <div style='display:flex;flex-direction:column;align-items:flex-start;'>
+                  <div style='font-size:14px;font-weight:bold;color:#222;'>空气质量</div>
+                  <div style='display:flex;align-items:baseline;margin-top:2px;'>
+                    <span style='font-size:22px;font-weight:bold;color:#222;'>${aqi}</span>
+                    <span style='font-size:13px;color:#888;margin-left:4px;'>${aqiText}</span>
+                  </div>
+                  <div style='font-size:13px;color:${color};margin-top:2px;'>${aqiText}</div>
+                </div>
+                <svg width='70' height='70' style='display:block;'>
+                  <path d='M${cx + r * Math.cos(startAngle*Math.PI/180)},${cy + r * Math.sin(startAngle*Math.PI/180)} A${r},${r} 0 1,1 ${cx + r * Math.cos((startAngle+270)*Math.PI/180)},${cy + r * Math.sin((startAngle+270)*Math.PI/180)}' fill='none' stroke='#eee' stroke-width='7'/>
+                  <path d='M${cx + r * Math.cos(startAngle*Math.PI/180)},${cy + r * Math.sin(startAngle*Math.PI/180)} A${r},${r} 0 ${largeArc},1 ${arcEndX},${arcEndY}' fill='none' stroke='${color}' stroke-width='7'/>
+                </svg>
+              </div>`;
+            }
+            if (data.uv && data.uv.level) {
+              let uv = parseFloat(data.uv.level);
+              // 紫外线等级判定
+              let uvLevelText = '';
+              let uvLevelColor = '';
+              if (uv < 3) {
+                uvLevelText = '低';
+                uvLevelColor = '#7ec050';
+              } else if (uv >= 3 && uv < 7) {
+                uvLevelText = '中等';
+                uvLevelColor = '#ffd34e';
+              } else if (uv === 7) {
+                uvLevelText = '高';
+                uvLevelColor = '#ff9800';
+              } else if (uv > 7 && uv < 10) {
+                uvLevelText = '非常高';
+                uvLevelColor = '#e74c3c';
+              } else if (uv >= 10) {
+                uvLevelText = '极端';
+                uvLevelColor = '#a084e8';
+              }
+              // 270°半环色带
+              let percent = Math.min(1, uv/11);
+              let startAngle = 135;
+              let r = 30, cx = 35, cy = 35;
+              let arcLen = percent * 270;
+              let arcEndAngle = startAngle + arcLen;
+              let arcEndX = cx + r * Math.cos(arcEndAngle*Math.PI/180);
+              let arcEndY = cy + r * Math.sin(arcEndAngle*Math.PI/180);
+              let largeArc = arcLen>180?1:0;
+              visuals += `
+              <div class='visual-card' style='display:flex;align-items:center;justify-content:space-between;background:#fff;border-radius:16px;box-shadow:0 2px 8px #0001;padding:12px 18px 10px 18px;margin-bottom:14px;'>
+                <div style='display:flex;flex-direction:column;align-items:flex-start;'>
+                  <div style='font-size:14px;font-weight:bold;color:#222;'>UV</div>
+                  <div style='display:flex;align-items:baseline;margin-top:2px;'>
+                    <span style='font-size:22px;font-weight:bold;color:#222;'>${uv}</span>
+                    <span style='font-size:13px;color:#888;margin-left:4px;'>紫外线程度</span>
+                  </div>
+                  <div style='font-size:13px;font-weight:bold;margin-top:2px;color:${uvLevelColor};'>${uvLevelText}</div>
+                </div>
+                <svg width='70' height='70' style='display:block;'>
+                  <path d='M${cx + r * Math.cos(startAngle*Math.PI/180)},${cy + r * Math.sin(startAngle*Math.PI/180)} A${r},${r} 0 1,1 ${cx + r * Math.cos((startAngle+270)*Math.PI/180)},${cy + r * Math.sin((startAngle+270)*Math.PI/180)}' fill='none' stroke='#eee' stroke-width='7'/>
+                  <path d='M${cx + r * Math.cos(startAngle*Math.PI/180)},${cy + r * Math.sin(startAngle*Math.PI/180)} A${r},${r} 0 ${largeArc},1 ${arcEndX},${arcEndY}' fill='none' stroke='${uvLevelColor}' stroke-width='7'/>
+                </svg>
+              </div>`;
+            }
+            let windSpeed = data.windSpeed || data.windSpeed10m || data.windSpeedKm || data['风速'] || '--';
+            let gust = data.gust || data.gustSpeed || data['阵风'] || '';
+            let windScaleText = data.windScaleText || '';
+            if (data.windDir && data.windScale && windSpeed !== '--') {
+              const dirMap = {"北":0,"东北":45,"东":90,"东南":135,"南":180,"西南":225,"西":270,"西北":315};
+              let angle = dirMap[data.windDir] !== undefined ? dirMap[data.windDir] : 0;
+              angle = (angle + 180) % 360;
+              visuals += `
+              <div class='weather-card-box'>
+                <div class='card-title'>风
+                  <svg class='card-arrow' viewBox='0 0 16 16'><polyline points='4,4 12,8 4,12' fill='none' stroke='#bbb' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>
+                </div>
+                <div style='display:flex;align-items:center;'>
+                  <svg width='80' height='80' style='display:inline-block;vertical-align:middle;'>
+                    <circle cx='40' cy='40' r='30' fill='none' stroke='#e0d6d6' stroke-width='7'/>
+                    <text x='40' y='15' font-size='11' font-weight='bold' text-anchor='middle'>北</text>
+                    <text x='70' y='43' font-size='11' font-weight='bold' text-anchor='middle'>东</text>
+                    <text x='40' y='75' font-size='11' font-weight='bold' text-anchor='middle'>南</text>
+                    <text x='10' y='43' font-size='11' font-weight='bold' text-anchor='middle'>西</text>
+                    <g transform='rotate(${angle},40,40)'>
+                      <polygon points='40,40 44,20 36,20' fill='#4caf50'/>
+                      <circle cx='40' cy='40' r='4' fill='#4caf50'/>
+                    </g>
+                  </svg>
+                  <div class='wind-numbers'>
+                    <div class='main'>${windSpeed}</div>
+                    <div class='sub'>公里/小时 风速</div>
+                    ${gust ? `<div class='main'>${gust}</div><div class='sub'>公里/小时 阵风</div>` : ''}
+                  </div>
+                </div>
+                <div class='wind-level'>风力: ${data.windScale}${windScaleText ? `<span class='wind-level-desc'>（${windScaleText}）</span>` : ''}</div>
+                <div class='card-bottom'>风力等级</div>
+              </div>`;
+            }
+            if (data.humidity) {
+              let hum = parseInt(data.humidity);
+              let dew = data.dew || '--';
+              let bars = '';
+              let filled = Math.round(hum/10);
+              for(let i=0;i<10;i++){
+                let h = 20 + i*3;
+                bars += `<rect x='${10+i*8}' y='${60-h}' width='6' height='${h}' rx='3' fill='${i<filled?"#4f8ef7":"#eee"}'/>`;
+              }
+              visuals += `
+              <div class='weather-card-box'>
+                <div class='card-title'>湿度
+                  <svg class='card-arrow' viewBox='0 0 16 16'><polyline points='4,4 12,8 4,12' fill='none' stroke='#bbb' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>
+                </div>
+                <div style='display:flex;align-items:center;'>
+                  <svg width='100' height='70' style='margin-right:8px;'>${bars}</svg>
+                  <div class='humidity-numbers'>
+                    <div class='main'>${hum}%</div>
+                    <div class='sub'>湿润</div>
+                    <div class='main'>${dew}°</div>
+                    <div class='sub'>露点</div>
+                  </div>
+                </div>
+                <div class='card-bottom'>潮湿</div>
+              </div>`;
+            }
+            document.getElementById('weather-advanced').innerHTML = visuals;
+            // 渲染气压曲线
+            if (data.pressure) {
+              fetch('/widgets/weather/pressure24h')
+                .then(resp => resp.json())
+                .then(arr => {
+                  if (!Array.isArray(arr) || arr.length === 0) return;
+                  let minP = Math.min(...arr, 980), maxP = Math.max(...arr, 1040);
+                  let svgW = 80, svgH = 60, pad = 8;
+                  let points = arr.map((v,i)=>{
+                    let x = pad + (svgW-2*pad) * i/23;
+                    let y = svgH-pad - (svgH-2*pad) * (v-minP)/(maxP-minP+1e-6);
+                    return [x,y];
+                  });
+                  let polyline = points.map(p=>p.join(",")).join(" ");
+                  let now = new Date().getHours();
+                  let highlight = points[now];
+                  let svg = `<polyline points='${polyline}' fill='none' stroke='#b39ddb' stroke-width='3'/><circle cx='${highlight[0]}' cy='${highlight[1]}' r='4' fill='#7c4dff' stroke='#fff' stroke-width='2'/>`;
+                  document.getElementById('pressure-curve-svg').innerHTML = `<svg width='80' height='60'>${svg}</svg>`;
+                });
+            }
+          fetch('/widgets/weather/forecast')
+            .then(response => response.json())
+            .then(forecast => {
+                if (forecast.error) return;
+              const tomorrow = forecast[1];
+              const dayAfter = forecast[2];
+                document.getElementById('weather-forecast').innerHTML = `
+                  ${tomorrow && tomorrow.fxDate ? tomorrow.fxDate.slice(5) : '--'} ${tomorrow && tomorrow.tempMax ? tomorrow.tempMax : '--'}°/${tomorrow && tomorrow.tempMin ? tomorrow.tempMin : '--'}° ${tomorrow && tomorrow.textDay ? tomorrow.textDay : '--'}<br>
+                  ${dayAfter && dayAfter.fxDate ? dayAfter.fxDate.slice(5) : '--'} ${dayAfter && dayAfter.tempMax ? dayAfter.tempMax : '--'}°/${dayAfter && dayAfter.tempMin ? dayAfter.tempMin : '--'}° ${dayAfter && dayAfter.textDay ? dayAfter.textDay : '--'}
+              `;
+            });
+            updateWeatherDisplay();
+          }
+        })
+        .catch(error => {
+          document.getElementById('weather-basic').innerHTML = `<div class="weather-desc">获取天气数据失败</div>`;
+          document.getElementById('weather-advanced').innerHTML = '';
+        });
+    }
+    function renderWeatherAlert() {
+      fetch('/widgets/weather/alert')
+        .then(resp => resp.json())
+        .then(alerts => {
+          const box = document.getElementById('weather-alert');
+          if (!alerts || alerts.length === 0) {
+            box.innerHTML = '';
+            return;
+          }
+          let html = alerts.map(a =>
+            `<div style='background:${a.level==="红色"?"#ff5252":a.level==="橙色"?"#ff9800":a.level==="黄色"?"#ffeb3b":"#90caf9"};color:#222;padding:4px 8px;margin-bottom:2px;border-radius:6px;font-size:13px;display:flex;align-items:center;'>
+              <span style='font-weight:bold;margin-right:6px;'>${a.level||''}${a.type||''}预警</span>
+              <span>${a.title||a.content||''}</span>
+            </div>`
+          ).join('');
+          box.innerHTML = html;
+        });
+    }
+    function searchCity() {
+      const input = document.getElementById('city-input');
+      const query = input.value.trim();
+      if (!query) return;
+      
+      fetch(`/widgets/weather/search?q=${encodeURIComponent(query)}`)
+        .then(response => response.json())
+        .then(results => {
+          const resultsDiv = document.getElementById('city-results');
+          if (results.length === 0) {
+            resultsDiv.innerHTML = '<div style="padding:8px;color:#666;">未找到匹配的城市</div>';
+            return;
+          }
+          
+          resultsDiv.innerHTML = results.map(city => `
+            <div onclick="selectCity('${city.name}', '${city.id}')" 
+                 style="padding:8px;cursor:pointer;border-bottom:1px solid #eee;hover:background:#f5f5f5;">
+              ${city.name}
+            </div>
+          `).join('');
+        })
+        .catch(error => {
+          console.error('搜索城市失败:', error);
+        });
+    }
+    function selectCity(cityName, cityId) {
+      localStorage.setItem('selectedCity', JSON.stringify({
+        name: cityName,
+        id: cityId
+      }));
+      
+      document.getElementById('city-search').style.display = 'none';
+      
+      updateWeather();
+    }
+    window.addEventListener('load', () => {
+      const savedCity = localStorage.getItem('selectedCity');
+      if (savedCity) {
+        const { name, id } = JSON.parse(savedCity);
+        updateWeather();
+      }
+    });
+    updateWeather();
+    renderWeatherAlert();
+    setInterval(updateWeather, 60 * 60 * 1000);
+    setInterval(renderWeatherAlert, 5 * 60 * 1000);
+    window.addEventListener('resize', updateWeatherDisplay);
+    window.addEventListener('fullscreenchange', updateWeatherDisplay);
+    window.addEventListener('DOMContentLoaded', updateWeatherDisplay);
+    if (window.ResizeObserver) {
+      const root = document.getElementById('weather-scale-root');
+      const ro = new ResizeObserver(updateWeatherDisplay);
+      if (root) ro.observe(root);
+    }
+  </script>
+</body>
+</html> 

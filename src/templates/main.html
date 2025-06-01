@@ -1,0 +1,398 @@
+{% extends 'base.html' %}
+<head>
+{% block include %}
+{{ super() }}
+<title>IntelliFusion</title>
+{% endblock %}
+{% block body %}
+<body class="light" onload="setup_website()">
+<div class="main" id="main-box">
+    <div class="chat">
+        <div id="contentwrap"  class="contentwrap">
+            <ul class="tab" id="tabs">
+            </ul>
+            <div id="Contents">
+            </div>
+        </div>
+    </div>
+    <div class="expand">
+        <div id="widgets_container_live" class="widgets_container">
+        </div>
+    </div>
+    <div class="session_add" id="session_add" style="display: none;">
+        <button class="btn" id="session_close"><i class="fa fa-close"></i></button>
+        <br>
+        <h4 style="margin-left: 30px;">添加标签页</h4>
+        <br>
+        <p class="p_widgets_bzdz">备注: <input type="name" class="widgets_name" id="session_comment" value="" /></p>
+        <p class="p_widgets_bzdz">模型: 
+        <select id="session_model">
+        </select>
+        </p>
+        <br>
+        <input type="hidden" id="widgets_id_edit" value=""/>
+        <button id="session_cancel" class="widgets_edit_commit deny" value="">取消</button>
+        <button id="session_cmt" class="widgets_edit_commit run" value="">新建</button>
+    </div>
+</div>
+
+<div class="account" id="account-box" style="display: none;">
+    <div style="margin-left:20px">
+        <button id="import-ollama-btn" style="margin:10px 0 10px 0;padding:8px 22px;border-radius:18px;background:#1edc98;color:#fff;border:none;box-shadow:0 2px 8px #0002;cursor:pointer;font-size:16px;vertical-align:middle;"><i class="fa fa-download"></i> 一键导入Ollama模型</button>
+        <table>
+            <thead>
+                <tr>
+                    <td>
+                        <h3>模型</h3>                           
+                    </td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td>
+                        <p>模型类型</p>
+                    </td>
+                    <td>
+                        <p>模型名称</p>
+                    </td>
+                    <td>
+                        <p>调用地址</p>
+                    </td>
+                    <td>
+                        <p>访问密钥</p>
+                    </td>
+                    <td>
+                        <p>编译地址</p>
+                    </td>
+                    <td>
+                        <p>启动地址</p>
+                    </td>
+                    <td>
+                        <p>运行 暂停</p>
+                    </td>
+                    <td>
+                        <p>编辑</p>
+                    </td>
+                    <td>
+                        <p>删除</p>
+                    </td>
+                    <td>
+                        <p>视觉模型</p>
+                    </td>
+                </tr>
+            </thead>
+            <tbody id="ModelTable">
+            </tbody>
+            <tfoot>
+                <input type="hidden" id="id-1" value="-1">
+                <tr id="AddTr">
+                    <td>
+                        <select id="Type-1" name="type">
+                            <option selected>OpenAI</option>
+                            <option>WebUI</option>
+                            <option>API</option>
+                            <option>Json</option>
+                        </select>
+                    </td>
+                    <td> 
+                        <input type="text" id="Comment-1" placeholder="ChatGLM">
+                    </td>
+                    <td>
+                        <input type="text" class="url" id="Url-1" placeholder="127.0.0.1:8000">
+                    </td>
+                    <td>
+                        <input type="text" class="url" id="APIkey-1" placeholder="Enter your API key here" />
+                    </td>
+                    <td>
+                        <input type="text" class="url" id="LcCompiler-1" placeholder="Choose A File">
+                        <button class="edit" onclick="ReadFile('LcCompiler-1')"><i class="fa fa-folder-open-o"></i></button>
+                    </td>
+                    <td>
+                        <input type="text" class="url" id="LcUrl-1" placeholder="Choose A File">
+                        <button class="edit" onclick="ReadFile('LcUrl-1')"><i class="fa fa-folder-open-o"></i></button>
+                    </td>
+                    <td>
+                        <button type="submit" class="add" id="add" value="-1"><i class="fa fa-plus"></i></button>
+                    </td>
+                    <td>
+                        <button disabled class="edit"><i class="fa fa-ban"></i></button>
+                    </td>
+                    <td>
+                        <button disabled class="deny"><i class="fa fa-ban"></i></button>
+                    </td>
+                    <td>
+                        <div class="switch-container">
+                            <input id="VisualModel-1" type="hidden" value="False">
+                            <input id="VisualModel-1_Checkbox" type="checkbox" class="hidden-checkbox" onclick="switch_load('VisualModel-1')">
+                            <span class="switch-area"></span>
+                            <span class="switch-toggle"></span>
+                        </div>
+                    </td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+
+<div class="widgets_box" id="widgets-box" style="display: none;">
+    <h3 style="margin: auto;">插件管理</h3>
+    <div class="widgets_container">
+        <ul id="widgets_container">
+        </ul>
+        <button class="btn_expand" onclick="show_widgets_add()"><i class="fa fa-plus"></i></button>
+    </div>
+    <div class="widgets_edit" id="widgets_edit" style="display: none;">
+        <button class="btn" id="widgets_close"><i class="fa fa-close"></i></button>
+        <br>
+        <div class="widgets_contentbox_pre">
+            <iframe id="widgets_preview" allow="autoplay *"></iframe>
+        </div>
+        <p class="p_widgets_bzdz">备注: <input type="name" class="widgets_name" id="widgets_name_edit" value="" /></p>
+        <p class="p_widgets_bzdz">地址: <input type="url" class="widgets_url" id="widgets_url_edit" value="" /></p>
+        <p class="p_widgets_bzdz" style="display: inline-block">是否启用:</p>
+        <div class="switch-container" style="display: inline-block">
+            <input id="widgets_available_edit" type="hidden" value="False">
+            <input id="widgets_available_edit_Checkbox" type="checkbox" class="hidden-checkbox" onclick="switch_load('widgets_available_edit')">
+            <span class="switch-area"></span>
+            <span class="switch-toggle"></span>
+        </div>
+        <br>
+        <input type="hidden" id="widgets_id_edit" value=""/>
+        <button id="widgets_commit_del" class="widgets_edit_commit deny" onclick="upload_widgets_del()" value="">删除</button>
+        <button id="widgets_commit_cmt" class="widgets_edit_commit edit"  onclick="upload_widgets_edit()" value="">更新</button>
+    </div>
+
+    <div class="widgets_edit" id="widgets_add" style="display: none;">
+        <button class="btn" id="widgets_close_add"><i class="fa fa-close"></i></button>
+        <br>
+        <div class="widgets_contentbox_pre">
+            <iframe id="widgets_preview" allow="autoplay *"></iframe>
+        </div>
+        <p class="p_widgets_bzdz">备注: <input type="name" class="widgets_name" id="widgets_name_add" value="" /></p>
+        <p class="p_widgets_bzdz">地址: <input type="url" class="widgets_url" id="widgets_url_add" value="" placeholder="/widgets/your_widgets"/></p>
+        <p class="p_widgets_bzdz" style="display: inline-block">是否启用:</p>
+        <div class="switch-container" style="display: inline-block">
+            <input id="widgets_available_add" type="hidden" value="True">
+            <input id="widgets_available_add_Checkbox" type="checkbox" class="hidden-checkbox" onclick="switch_load('widgets_available_add')">
+            <span class="switch-area"></span>
+            <span class="switch-toggle"></span>
+        </div>
+        <br>
+        <button id="widgets_close_add_1" class="widgets_edit_commit deny">取消</button>
+        <button id="widgets_edit" class="widgets_edit_commit run" onclick="upload_widgets_add()">提交</button>
+    </div>
+</div>
+
+<div class="models" id="models-box" style="display: none;">
+    <div class="card_container">
+        <a href="https://github.com/THUDM/ChatGLM-6B">
+            <div class="card_contentbox">
+                    <h2>ChatGLM-6B</h2>
+                    <p>ChatGLM-6B 是一个开源的、支持中英双语的对话语言模型。更多信息请点击本链接</p>
+            </div>
+        </a>
+
+        <a href="https://www.openai.com/">
+            <div class="card_contentbox">
+                <h2>ChatGPT</h2>
+                <p>ChatGPT是由OpenAI开发的大型语言模型,用于进行自然语言交互。更多信息请点击本链接</p>
+            </div>
+        </a>
+
+        <a href="https://github.com/AUTOMATIC1111/stable-diffusion-webui">
+            <div class="card_contentbox">
+                <h2>StableDiffusion</h2>
+                <p>Stable Diffusion是一种潜在扩散模型,能够从文本描述中生成详细的图像。更多信息请点击本链接</p>
+            </div>
+        </a>
+    </div>
+</div>
+
+<div class="settings" id="setting-box" style="display: none;">
+    <div style="margin-left:20px" class="content">
+        <hr class="line">
+        <table>
+            <thead>
+                <tr>
+                    <th>
+                        <h3>外观设置  </h3>
+                    </th>
+                    <th>
+                        <h3>UI Settings</h3>
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>
+                        <p>深色模式</p>
+                    </td>
+                    <td>
+                        <p><i class="fa fa-adjust" id="change-adjust"></i></p>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <hr class="line">
+        <table>
+            <tr>
+                <th>
+                    <h3>基础设置  </h3>
+                </th>
+                <th>
+                    <h3>Base Settings</h3>
+                </th>
+            </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>
+                        <p>语言设置</p>
+                    </td>
+                    <td>
+                        <select id="Language">
+                            <option id="Chinese">Chinese</option>
+                            <option id="Japanese">Japanese</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <p>活跃检测</p>
+                    </td>
+                    <td>
+                        <div class="switch-container">
+                            <input id="ActiveExamine" type="hidden" value="False">
+                            <input id="ActiveExamine_Checkbox" type="checkbox" class="hidden-checkbox" onclick="switch_load('ActiveExamine')">
+                            <span class="switch-area"></span>
+                            <span class="switch-toggle"></span>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <p>启动超时限制</p>
+                    </td>
+                    <td>
+                        <input type="number" id="Timeout" placeholder="60" value="" />
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <hr class="line">
+        <table>
+            <thead>
+                <tr>
+                    <th>
+                        <h3>分享设置</h3>
+                    </th>
+                    <th>
+                        <h3>Share Setting</h3>
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>
+                        <p>远程地址</p>
+                    </td>
+                    <td>
+                        <input type="text" id="Host" placeholder="127.0.0.1" value="" />
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <p>端口</p>
+                    </td>
+                    <td>
+                        <input type="number" id="Port" placeholder="5000" value="" />
+                    </td>
+                </tr>
+            </thead>
+        </table>
+        <hr class="line">
+        <table>
+            <thead>
+                <tr>
+                    <th>
+                        <h3>开发者设置  </h3>
+                    </th>
+                    <th>
+                        <h3>Developer Settings</h3>
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>
+                        <p>DeBug模式</p>
+                    </td>
+                    <td>
+                        <div class="switch-container">
+                            <input id="Develop" type="hidden" value="False">
+                            <input id="Develop_Checkbox" type="checkbox" class="hidden-checkbox" onclick="switch_load('Develop')">
+                            <span class="switch-area"></span>
+                            <span class="switch-toggle"></span>
+                        </div>
+                    </td>
+                </tr>
+            </thead>
+        </table>
+        <hr class="line">
+    </div>
+    <button type="submit" class="save" onclick="save_settings()"><i class="fa fa-edit"></i>更改</button>
+</div>
+
+<div class="copyright" id="rights-box" style="display: none;" type="checkbox">
+    <button class="btn"><i class="fa fa-close"></i></button>
+    <div id="box">
+        <img style="margin: 10px;width: 150px;height: 150px;" src="/static/res/intellifusion_sketch_1_o.ico" alt="iF">
+        <h3 style="margin: 50px;">inteliFusi0n Version <p id="Version"></p></h3>
+        <h5 style="margin: 50px;width: 100px;">use bootstrap5 framework<br>use E charts</h4>
+        <a style="width: 100px;height: 50px;" href="https://www.github.com/hcl595/intellifusion/">
+            <button class="Hyperlink">learn more...</button>
+        </a>
+        <h5  style="margin: 30px;">
+        </h5>
+    </div>
+</div>
+
+<div class="loadingOne" id="loading" style="display: none;">
+    <span></span>
+    <span></span>
+    <span></span>
+    <span></span>
+    <span></span>
+</div>
+
+<div class="AlertPlaceholder" id="liveAlertPlaceholder">
+</div>
+</body>
+<script type="text/javascript">
+//alert message
+const alertPlaceholder = document.getElementById('liveAlertPlaceholder')
+
+const alert = (message, type) => {
+  const wrapper = document.createElement('div')
+  wrapper.innerHTML = [
+    `<div class="alert alert-${type} alert-dismissible fade show" role="alert">`,
+    `   <div>${message}</div>`,
+    '   <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>',
+    '</div>'
+  ].join('')
+  alertPlaceholder.append(wrapper)
+  setTimeout(function(){
+    wrapper.remove()
+  },5001)
+}
+
+
+var int = setInterval(function(){
+    refresh_website()
+  },1000000)
+</script>
+{% endblock %}
+{% block footer %}
+{% endblock %}
+</html>

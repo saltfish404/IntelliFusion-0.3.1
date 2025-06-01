@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="zh-CN" style="height: 100%">
+<head>
+  <meta charset="utf-8">
+  <script src="../static/js/jquery.min.js"></script>
+  <script src="../static/js/echarts.min.js"></script>
+  <style>
+    body { height: 100%; margin: 0; background: transparent; }
+    .perf-card { width: 100%; height: 100%; min-width: 260px; min-height: 260px; background: #eaf6fd; border-radius: 18px; box-shadow: 0 2px 8px #0002; display: flex; flex-direction: row; align-items: stretch; box-sizing: border-box; padding: 0; }
+    .perf-list { width: 70px; display: flex; flex-direction: column; justify-content: space-around; align-items: stretch; background: #f5faff; border-radius: 18px 0 0 18px; padding: 10px 0; box-sizing: border-box; }
+    .perf-item { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 18px; color: #4f8ef7; cursor: pointer; border-radius: 12px; margin: 6px 10px; transition: background 0.2s, color 0.2s; user-select: none; }
+    .perf-item.active { background: #4f8ef7; color: #fff; font-weight: bold; }
+    .perf-main { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 0; min-height: 0; }
+    #perf_gauge { width: 90%; height: 90%; min-width: 120px; min-height: 120px; max-width: 260px; max-height: 260px; }
+    .wifi-main-value { text-align: center; color: #43a047; font-size: 18px; font-weight: bold; margin-top: 2px; margin-bottom: 0; }
+    .wifi-detail { text-align: center; color: #43a047; font-size: 13px; margin-top: 2px; margin-bottom: 8px; }
+  </style>
+</head>
+<body>
+  <div class="perf-card">
+    <div class="perf-list">
+      <div class="perf-item active" data-type="cpu">CPU</div>
+      <div class="perf-item" data-type="gpu">GPU</div>
+      <div class="perf-item" data-type="wifi">WiFi</div>
+      <div class="perf-item" data-type="ram">RAM</div>
+    </div>
+    <div class="perf-main">
+      <div id="perf_gauge"></div>
+      <div id="wifi_main_value" class="wifi-main-value" style="display:none;"></div>
+      <div id="wifi_detail" class="wifi-detail" style="display:none;"></div>
+    </div>
+  </div>
+  <script>
+    var perfData = { cpu: 0, gpu: 0, wifi_sent: 0, wifi_recv: 0, wifi_up: 0, wifi_down: 0, ram: 0 };
+    var lastWifiSent = 0, lastWifiRecv = 0, lastWifiTime = Date.now();
+    var currentType = 'cpu';
+    function formatSpeed(val) {
+      if(!isFinite(val) || val < 0) val = 0;
+      if(val > 1024*1024) return (val/1024/1024).toFixed(2) + ' MB/s';
+      if(val > 1024) return (val/1024).toFixed(2) + ' KB/s';
+      return val.toFixed(0) + ' B/s';
+    }
+    function getGaugeOption(type, value, max) {
+      var nameMap = {cpu: 'CPU', gpu: 'GPU', wifi: 'WiFi', ram: 'RAM'};
+      var colorMap = {cpu: '#4f8ef7', gpu: '#4f8ef7', wifi: '#7ed6df', ram: '#4f8ef7'};
+      var maxMap = {cpu: 100, gpu: 100, wifi: 10240, ram: 100};
+      return {
+        backgroundColor: '#eaf6fd',
+        series: [
+          {
+            name: nameMap[type],
+            type: 'gauge',
+            min: 0,
+            max: (type === 'wifi' && max) ? max : maxMap[type],
+            progress: { show: true, width: 16, itemStyle: { color: colorMap[type] } },
+            axisLine: { lineStyle: { width: 16, color: [[1, '#e0e7ef']] } },
+            axisTick: { show: false },
+            splitLine: { show: false },
+            axisLabel: { show: false },
+            pointer: { show: true, width: 6, length: '60%', itemStyle: { color: colorMap[type] } },
+            detail: {
+              show: type!=='wifi',
+              valueAnimation: true,
+              fontSize: 32,
+              color: colorMap[type],
+              formatter: type!=='wifi' ? '{value}%' : '{value} KB/s',
+              offsetCenter: [0, '40%']
+            },
+            title: {
+              show: true,
+              offsetCenter: [0, '-30%'],
+              fontSize: 18,
+              color: '#222',
+              fontWeight: 'bold'
+            },
+            data: [{ value: value, name: nameMap[type] }]
+          }
+        ]
+      };
+    }
+    function fetchAllPerf() {
+      $.post('/widgets/Get_CPU_Percent', function(res){ perfData.cpu = res.data || 0; if(currentType==='cpu') updateGauge(); });
+      $.post('/widgets/Get_GPU_Percent', function(res){ perfData.gpu = res.data || 0; if(currentType==='gpu') updateGauge(); });
+      $.post('/widgets/Get_RAM_Percent', function(res){ perfData.ram = res.data || 0; if(currentType==='ram') updateGauge(); });
+      $.post('/widgets/Get_Net_Traffic', function(res){
+        let now = Date.now();
+        if (lastWifiSent !== 0 && lastWifiRecv !== 0) {
+          let interval = (now - lastWifiTime) / 1000;
+          let up = (res.sent - lastWifiSent) / interval;
+          let down = (res.recv - lastWifiRecv) / interval;
+          perfData.wifi_up = (isFinite(up) && up > 0) ? up : 0;
+          perfData.wifi_down = (isFinite(down) && down > 0) ? down : 0;
+        } else {
+          perfData.wifi_up = 0;
+          perfData.wifi_down = 0;
+        }
+        lastWifiSent = res.sent;
+        lastWifiRecv = res.recv;
+        lastWifiTime = now;
+        if(currentType==='wifi') updateGauge();
+      });
+    }
+    function updateGauge() {
+      var dom = document.getElementById('perf_gauge');
+      var myChart = echarts.init(dom);
+      var wifiMainValue = document.getElementById('wifi_main_value');
+      var wifiDetail = document.getElementById('wifi_detail');
+      if(currentType==='wifi') {
+        let total = perfData.wifi_up + perfData.wifi_down;
+        if (!isFinite(total) || total < 0) total = 0;
+        let totalKB = total / 1024;
+        // 动态max：当前速率的2倍，最小2KB/s，最大10240KB/s
+        let dynamicMax = Math.max(2, Math.min(10240, Math.ceil(totalKB * 2)));
+        myChart.setOption(getGaugeOption('wifi', totalKB, dynamicMax));
+        wifiMainValue.style.display = '';
+        wifiMainValue.innerHTML = formatSpeed(total);
+        wifiDetail.style.display = '';
+        wifiDetail.innerHTML = '<span>↑ ' + formatSpeed(perfData.wifi_up) + '　↓ ' + formatSpeed(perfData.wifi_down) + '</span>';
+      } else {
+        var val = perfData[currentType] || 0;
+        myChart.setOption(getGaugeOption(currentType, val));
+        wifiMainValue.style.display = 'none';
+        wifiDetail.style.display = 'none';
+      }
+    }
+    $('.perf-item').click(function(){ $('.perf-item').removeClass('active'); $(this).addClass('active'); currentType = $(this).data('type'); updateGauge(); });
+    setInterval(fetchAllPerf, 1000);
+    fetchAllPerf();
+    updateGauge();
+  </script>
+</body>
+</html> 
